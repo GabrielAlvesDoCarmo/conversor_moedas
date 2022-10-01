@@ -7,16 +7,14 @@ import 'dart:convert';
 const baseUrl = "https://api.hgbrasil.com/finance?key=1020c49e";
 
 void main() async {
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const HomePage(),
-      theme: ThemeData(
-          hintColor: Colors.amber,
-          primaryColor: Colors.white,
-          ),
-    )
-  );
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: const HomePage(),
+    theme: ThemeData(
+      hintColor: Colors.amber,
+      primaryColor: Colors.white,
+    ),
+  ));
 }
 
 Future<Map> getAllData() async {
@@ -32,8 +30,29 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final realController = TextEditingController();
+  final dollarController = TextEditingController();
+  final euroController = TextEditingController();
   late double dolar;
   late double euro;
+
+  void _realChange(String value) {
+    double real = double.parse(value);
+    dollarController.text = (real / dolar).toStringAsFixed(2);
+    euroController.text = (real / euro).toStringAsFixed(2);
+  }
+
+  void _dollarChange(String value) {
+    double dolar = double.parse(value);
+    realController.text = (dolar * this.dolar).toStringAsFixed(2);
+    euroController.text = (dolar * this.dolar / euro).toStringAsFixed(2);
+  }
+
+  void _euroChange(String value) {
+    double euro = double.parse(value);
+    realController.text = (euro * this.euro).toStringAsFixed(2);
+    dollarController.text = (euro * this.euro / dolar).toStringAsFixed(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,47 +94,26 @@ class _HomePageState extends State<HomePage> {
                   );
                 } else {
                   dolar = snapshot.data?['results']['currencies']['USD']['buy'];
-                  dolar = snapshot.data?['results']['currencies']['EUR']['buy'];
-                  dolar = snapshot.data?['results']['currencies']['EUR']['buy'];
-                  print("Dolar " + dolar.toString());
+                  euro = snapshot.data?['results']['currencies']['EUR']['buy'];
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(10.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: const [
-                        Icon(
+                      children: [
+                        const Icon(
                           Icons.monetization_on,
                           size: 150.0,
                           color: Colors.amber,
                         ),
-                        Divider(),
-                        TextField(
-                          decoration: InputDecoration(
-                              labelText: "Reais",
-                              labelStyle: TextStyle(color: Colors.amber),
-                              border: OutlineInputBorder(),
-                              prefixText: "R\$"),
-                          style: TextStyle(color: Colors.amber, fontSize: 25),
-                        ),
-                        Divider(),
-                        TextField(
-                          decoration: InputDecoration(
-                              labelText: "Dolar",
-                              labelStyle: TextStyle(color: Colors.amber),
-                              border: OutlineInputBorder(),
-                              prefixText: "US\$"),
-                          style: TextStyle(color: Colors.amber, fontSize: 25),
-                        ),
-                        Divider(),
-                        TextField(
-                          decoration: InputDecoration(
-                              labelText: "Euros",
-                              labelStyle: TextStyle(color: Colors.amber),
-                              border: OutlineInputBorder(),
-                              prefixText: "€\$"),
-                          style: TextStyle(color: Colors.amber, fontSize: 25),
-                        )
-
+                        const Divider(),
+                        buildTextField(
+                            "Reais", "R\$", realController, _realChange),
+                        const Divider(),
+                        buildTextField(
+                            "Dolar", "US\$", dollarController, _dollarChange),
+                        const Divider(),
+                        buildTextField(
+                            "Euros", "€\$", euroController, _euroChange)
                       ],
                     ),
                   );
@@ -127,6 +125,22 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
 
-generateUi(context, snapshot) {}
+  Widget buildTextField(String label, String prefix,
+      TextEditingController controller, Function f) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.amber),
+        border: const OutlineInputBorder(),
+        prefixText: prefix,
+      ),
+      keyboardType: TextInputType.number,
+      controller: controller,
+      style: const TextStyle(color: Colors.amber, fontSize: 25),
+      onChanged: (value) {
+        f(value);
+      },
+    );
+  }
+}
